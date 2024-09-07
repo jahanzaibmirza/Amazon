@@ -64,8 +64,10 @@ class AmazonDataSpider(scrapy.Spider):
         # yield scrapy.Request(url=url, headers=self.headers, callback=self.parse,)
 
     def parse(self, response):
+        item= dict()
         divs= response.xpath('//div[@data-component-type="s-search-result"]')
         for each_div in divs[:]:
+
             ProductName = each_div.xpath('.//h2//span/text()').get('').strip()
             ASIN= each_div.xpath('.//@data-asin').get('').strip()
             Rating= each_div.xpath("//span[contains(@aria-label,'stars')]").get('').strip()
