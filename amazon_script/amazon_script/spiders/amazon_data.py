@@ -67,15 +67,22 @@ class AmazonDataSpider(scrapy.Spider):
         item= dict()
         divs= response.xpath('//div[@data-component-type="s-search-result"]')
         for each_div in divs[:]:
-
-            ProductName = each_div.xpath('.//h2//span/text()').get('').strip()
-            ASIN= each_div.xpath('.//@data-asin').get('').strip()
-            Rating= each_div.xpath("//span[contains(@aria-label,'stars')]").get('').strip()
-            NoOfReviews= each_div.xpath(".//span[contains(@aria-label,'ratings')]").get('').strip().replace('ratings','')
+            item['ProductName'] = each_div.xpath('.//h2//span/text()').get('').strip()
+            item['ASIN']= each_div.xpath('.//@data-asin').get('').strip()
+            item['Rating']= each_div.xpath("//span[contains(@aria-label,'stars')]/text()").get('').strip()
+            item['NoOfReviews']= each_div.xpath(".//span[contains(@aria-label,'ratings')]/text()").get('').strip().replace('ratings','')
             url_suffix = each_div.xpath(".//h2//a/@href").get('')
-            URL = f'https://www.amazon.com{url_suffix}' if url_suffix else ''
-            Price= each_div.xpath(".//span[@class='a-price']//span[@class='a-offscreen']/text()").get('').strip()
-            SaveCoupon= each_div.xpath(".//span[@class='s-coupon-unclipped']/span[1]/text()").get('').strip().replace('Save','').strip()
+            item['URL'] = f'https://www.amazon.com{url_suffix}' if url_suffix else ''
+            item['Price']= each_div.xpath(".//span[@class='a-price']//span[@class='a-offscreen']/text()").get('').strip()
+            item['SaveCoupon']= each_div.xpath(".//span[@class='s-coupon-unclipped']/span[1]/text()").get('').strip().replace('Save','').strip()
 
-            ViewPortWidth='1291'
-            ViewPortHeight ='826'
+            item['ViewPortWidth']='1291'
+            item['ViewPortHeight'] ='826'
+
+            yield item
+
+        # pagination
+        next_page= response.xpath("//a[contains(@class,'s-pagination-next')]/@href").get('')
+        if next_page:
+            next_page_url= f'https://www.amazon.com{next_page}'
+            yield scrapy.Request(url=next_page_url, headers=self.headers, callback=self.parse)
